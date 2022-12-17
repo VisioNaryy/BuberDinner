@@ -1,13 +1,11 @@
 ﻿using BuberDinner.Application.Services.Authentication;
-using BuberDinner.Filters;
 using Contracts.Authentication;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BuberDinner.Controllers;
 
 [Route("auth/[action]")]
-[ApiController]
-public class AuthenticationController : ControllerBase
+public class AuthenticationController : ApiController
 {
     private readonly IAuthenticationService _authenticationService;
 
@@ -19,9 +17,27 @@ public class AuthenticationController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
-        var authResult =
+        var registerResult =
             _authenticationService.Register(request.FirstName, request.LastName, request.Email, request.Password);
 
+        return registerResult.Match(
+        authResult => Ok(MapAuthResult(authResult)),
+        errors => Problem(errors));
+
+        //Using Fluent errors
+        // if (registerResult.IsSuccess)
+        //     return Ok(MapAuthResult(registerResult.Value));
+        //
+        // var firstError = registerResult.Errors.FirstOrDefault();
+        //
+        // if (firstError is DuplicateEmailError)
+        //     return Problem(statusCode: StatusCodes.Status409Conflict, title:"Email already exists.");
+        //
+        // return Problem();
+    }
+
+    private static AuthenticationResponse MapAuthResult(AuthenticationResult authResult)
+    {
         var response = new AuthenticationResponse(
             authResult.User.Id,
             authResult.User.FirstName,
@@ -29,8 +45,7 @@ public class AuthenticationController : ControllerBase
             authResult.User.Email,
             authResult.Token
         );
-
-        return Ok(response);
+        return response;
     }
 
     [HttpPost]
@@ -39,14 +54,9 @@ public class AuthenticationController : ControllerBase
         var loginResult =
             _authenticationService.Login(request.Email, request.Password);
 
-        var response = new AuthenticationResponse(
-            loginResult.User.Id,
-            loginResult.User.FirstName,
-            loginResult.User.LastName,
-            loginResult.User.Email,
-            loginResult.Token
-        );
-
-        return Ok(response);
+        return loginResult.Match(
+            authResult => Ok(MapAuthResult(authResult)),
+            errors => Problem(errors)
+            );
     }
 }

@@ -6,7 +6,6 @@ using BuberDinner.Infrastructure.Persistence;
 using BuberDinner.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 
 namespace BuberDinner.Infrastructure;
 
