@@ -1,5 +1,9 @@
-﻿using BuberDinner.Application.Services.Authentication;
+﻿using BuberDinner.Application.Authentication.Commands.Register;
+using BuberDinner.Application.Authentication.Common;
+using BuberDinner.Application.Authentication.Queries.Login;
+using BuberDinner.Application.Common;
 using Contracts.Authentication;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BuberDinner.Controllers;
@@ -7,22 +11,25 @@ namespace BuberDinner.Controllers;
 [Route("auth/[action]")]
 public class AuthenticationController : ApiController
 {
-    private readonly IAuthenticationService _authenticationService;
+    private readonly ISender _sender;
 
-    public AuthenticationController(IAuthenticationService authenticationService)
+    public AuthenticationController(ISender sender)
     {
-        _authenticationService = authenticationService;
+        _sender = sender;
     }
 
     [HttpPost]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
-        var registerResult =
-            _authenticationService.Register(request.FirstName, request.LastName, request.Email, request.Password);
+        var (firstName, lastName, email, password) = request;
+        
+        var command = new RegisterCommand(firstName, lastName, email, password);
+
+        var registerResult = await _sender.Send(command);
 
         return registerResult.Match(
-        authResult => Ok(MapAuthResult(authResult)),
-        errors => Problem(errors));
+            authResult => Ok(MapAuthResult(authResult)),
+            errors => Problem(errors));
 
         //Using Fluent errors
         // if (registerResult.IsSuccess)
@@ -36,6 +43,21 @@ public class AuthenticationController : ApiController
         // return Problem();
     }
 
+    [HttpPost]
+    public async Task<IActionResult> Login(LoginRequest request)
+    {
+        var (email, password) = request;
+
+        var query = new LoginQuery(email, password);
+
+        var loginResult = await _sender.Send(query);
+
+        return loginResult.Match(
+            authResult => Ok(MapAuthResult(authResult)),
+            errors => Problem(errors)
+        );
+    }
+
     private static AuthenticationResponse MapAuthResult(AuthenticationResult authResult)
     {
         var response = new AuthenticationResponse(
@@ -46,17 +68,5 @@ public class AuthenticationController : ApiController
             authResult.Token
         );
         return response;
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> Login(LoginRequest request)
-    {
-        var loginResult =
-            _authenticationService.Login(request.Email, request.Password);
-
-        return loginResult.Match(
-            authResult => Ok(MapAuthResult(authResult)),
-            errors => Problem(errors)
-            );
     }
 }
