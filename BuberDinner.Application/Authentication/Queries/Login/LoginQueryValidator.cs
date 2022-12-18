@@ -1,5 +1,4 @@
-﻿using BuberDinner.Application.Authentication.Commands.Register;
-using FluentValidation;
+﻿using FluentValidation;
 
 namespace BuberDinner.Application.Authentication.Queries.Login;
 
