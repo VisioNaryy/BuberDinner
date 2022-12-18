@@ -1,8 +1,7 @@
 ﻿using BuberDinner.Application.Authentication.Commands.Register;
-using BuberDinner.Application.Authentication.Common;
 using BuberDinner.Application.Authentication.Queries.Login;
-using BuberDinner.Application.Common;
 using Contracts.Authentication;
+using MapsterMapper;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,61 +11,36 @@ namespace BuberDinner.Controllers;
 public class AuthenticationController : ApiController
 {
     private readonly ISender _sender;
+    private readonly IMapper _mapper;
 
-    public AuthenticationController(ISender sender)
+    public AuthenticationController(ISender sender, IMapper mapper)
     {
         _sender = sender;
+        _mapper = mapper;
     }
 
     [HttpPost]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
-        var (firstName, lastName, email, password) = request;
-        
-        var command = new RegisterCommand(firstName, lastName, email, password);
+        var command = _mapper.Map<RegisterCommand>(request);
 
         var registerResult = await _sender.Send(command);
 
         return registerResult.Match(
-            authResult => Ok(MapAuthResult(authResult)),
+            authResult => Ok(_mapper.Map<AuthenticationResponse>(authResult)),
             errors => Problem(errors));
-
-        //Using Fluent errors
-        // if (registerResult.IsSuccess)
-        //     return Ok(MapAuthResult(registerResult.Value));
-        //
-        // var firstError = registerResult.Errors.FirstOrDefault();
-        //
-        // if (firstError is DuplicateEmailError)
-        //     return Problem(statusCode: StatusCodes.Status409Conflict, title:"Email already exists.");
-        //
-        // return Problem();
     }
 
     [HttpPost]
     public async Task<IActionResult> Login(LoginRequest request)
     {
-        var (email, password) = request;
-
-        var query = new LoginQuery(email, password);
+        var query = _mapper.Map<LoginQuery>(request);
 
         var loginResult = await _sender.Send(query);
 
         return loginResult.Match(
-            authResult => Ok(MapAuthResult(authResult)),
+            authResult => Ok(_mapper.Map<AuthenticationResponse>(authResult)),
             errors => Problem(errors)
         );
-    }
-
-    private static AuthenticationResponse MapAuthResult(AuthenticationResult authResult)
-    {
-        var response = new AuthenticationResponse(
-            authResult.User.Id,
-            authResult.User.FirstName,
-            authResult.User.LastName,
-            authResult.User.Email,
-            authResult.Token
-        );
-        return response;
     }
 }
