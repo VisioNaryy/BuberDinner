@@ -1,4 +1,4 @@
-﻿namespace BuberDinner.Domain.Errors;
+﻿namespace BuberDinner.Domain.Common.Errors;
 
 public static partial class Errors
 {
