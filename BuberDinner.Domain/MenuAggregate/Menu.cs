@@ -5,9 +5,8 @@ using BuberDinner.Domain.Host.ValueObjects;
 using BuberDinner.Domain.Menu.Entities;
 using BuberDinner.Domain.Menu.ValueObjects;
 using BuberDinner.Domain.MenuReview.ValueObjects;
-using ErrorOr;
 
-namespace BuberDinner.Domain.Menu;
+namespace BuberDinner.Domain.MenuAggregate;
 
 public sealed class Menu: AggregateRoot<MenuId>
 {
@@ -26,21 +25,25 @@ public sealed class Menu: AggregateRoot<MenuId>
     public DateTime CreatedDateTime { get; set; }
     public DateTime UpdatedDateTime { get; set; }
 
-    private Menu(MenuId id, string name, string description, HostId hostId, DateTime createdDateTime, DateTime updatedDateTime) : base(id)
+    private Menu(MenuId id, string name, string description, HostId hostId, List<MenuSection> sections, AverageRating averageRating, DateTime createdDateTime, DateTime updatedDateTime) : base(id)
     {
         Name = name;
         Description = description;
         HostId = hostId;
+        _sections = sections;
+        AverageRating = averageRating;
         CreatedDateTime = createdDateTime;
         UpdatedDateTime = updatedDateTime;
     }
 
-    public Menu CreateNew(string name, string description, HostId hostId)
+    public static Menu Create(string name, string description, HostId hostId, List<MenuSection> sections, AverageRating averageRating)
         => new(
             MenuId.CreateUniqie(),
             name,
             description,
             hostId,
+            sections,
+            averageRating,
             DateTime.UtcNow,
             DateTime.UtcNow
         );

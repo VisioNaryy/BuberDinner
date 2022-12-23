@@ -14,8 +14,11 @@ public class HostId : ValueObject
     public static HostId CreateUniqie()
     {
         return new(Guid.NewGuid());
-    }    
-    
+    }
+
+    public static HostId Create(string value)
+    => new(new Guid(value));
+
     public override IEnumerable<object?> GetEqualityComponents()
     {
         yield return Value;
